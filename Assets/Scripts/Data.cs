@@ -50,4 +50,5 @@ public static class Data
         { Tetromino.T, WallKicksJLOSTZ },
         { Tetromino.Z, WallKicksJLOSTZ },
     };
+
 }
