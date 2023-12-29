@@ -382,7 +382,8 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: c1df4f238a173fe439d40aa35d63e12b, type: 2}
   - tetromino: 6
     tile: {fileID: 11400000, guid: d1bd11d0e1e119a4f9a0f4e76c62ed74, type: 2}
-  spawnPosition: {x: 0, y: 0, z: 0}
+  spawnPosition: {x: -1, y: 8, z: 0}
+  boardSize: {x: 10, y: 20}
 --- !u!156049354 &900920409
 Grid:
   m_ObjectHideFlags: 0
@@ -423,7 +424,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b88872590a36e7946b9625508e023c0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  board: {fileID: 0}
 --- !u!1 &1529498492
 GameObject:
   m_ObjectHideFlags: 0
