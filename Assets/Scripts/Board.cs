@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 
 public class Board : MonoBehaviour
@@ -9,12 +10,16 @@ public class Board : MonoBehaviour
     public TetrominoData[] tetrominoes;
     public Vector2Int boardSize = new Vector2Int(10, 20);
     public Vector3Int spawnPosition = new Vector3Int(-1, 8, 0);
-
-    public RectInt Bounds {
+    private int score = 0;
+    private float time = 0;
+    public Text scoreText;
+    public Text timeText;
+    public RectInt Bounds //RectInt: Dikdortgenlerde sinir belirtmede kullanilir.
+    {
         get
         {
-            Vector2Int position = new Vector2Int(-boardSize.x / 2, -boardSize.y / 2);
-            return new RectInt(position, boardSize);
+            Vector2Int position = new Vector2Int(-boardSize.x / 2, -boardSize.y / 2);// Yeni alan sinirlarini ayarlama
+            return new RectInt(position, boardSize); // Yeni alan sinirlari.
         }
     }
 
@@ -23,7 +28,8 @@ public class Board : MonoBehaviour
         tilemap = GetComponentInChildren<Tilemap>();
         activePiece = GetComponentInChildren<Piece>();
 
-        for (int i = 0; i < tetrominoes.Length; i++) {
+        for (int i = 0; i < tetrominoes.Length; i++)
+        {
             tetrominoes[i].Initialize();
         }
     }
@@ -32,29 +38,40 @@ public class Board : MonoBehaviour
     {
         SpawnPiece();
     }
+    private void FixedUpdate()
+    {
+        time += Time.deltaTime;
+        string formattedTimer = time.ToString("Time:0.0");
+        timeText.text = formattedTimer;
+    }
 
-    public void SpawnPiece()
+    public void SpawnPiece() //Data'dan random olarak parca olusturma
     {
         int random = Random.Range(0, tetrominoes.Length);
         TetrominoData data = tetrominoes[random];
 
         activePiece.Initialize(this, spawnPosition, data);
 
-        if (IsValidPosition(activePiece, spawnPosition)) {
+        //spawn noktasindan parca olusturabiliyorsa piece kodunu calistir yani hucre spawnla
+        if (IsValidPosition(activePiece, spawnPosition))
+        {
             Set(activePiece);
-        } else {
+        }
+        else //degilse oyun bitsin
+        {
             GameOver();
+            score = 0;
+            time = 0;
+            UpdateScoreUI();
         }
     }
 
-    public void GameOver()
+    public void GameOver() //bittiginde sahnedeki bloklarin yok olmasi icin
     {
         tilemap.ClearAllTiles();
-
-        // Do anything else you want on game over here..
     }
 
-    public void Set(Piece piece)
+    public void Set(Piece piece) //Piece kodundaki hucrelerin olusturulmasini saglar.
     {
         for (int i = 0; i < piece.cells.Length; i++)
         {
@@ -63,35 +80,34 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void Clear(Piece piece)
+    public void Clear(Piece piece) //Hucreler olusturulurken bos kisimlar olusturur.
     {
         for (int i = 0; i < piece.cells.Length; i++)
         {
             Vector3Int tilePosition = piece.cells[i] + piece.position;
-            tilemap.SetTile(tilePosition, null);
+            tilemap.SetTile(tilePosition, null); //Belirlenen pozisyonu bos birak
         }
     }
 
-    public bool IsValidPosition(Piece piece, Vector3Int position)
+    public bool IsValidPosition(Piece piece, Vector3Int position) //Konumu kontrol eder
     {
         RectInt bounds = Bounds;
 
-        // The position is only valid if every cell is valid
+        // Konum yalnızca her hucre geçerliyse geçerlidir
         for (int i = 0; i < piece.cells.Length; i++)
         {
             Vector3Int tilePosition = piece.cells[i] + position;
 
-            // An out of bounds tile is invalid
-            if (!bounds.Contains((Vector2Int)tilePosition)) {
-                return false;
+            if (!bounds.Contains((Vector2Int)tilePosition)) // Hucreler sinirlar icinde degilse
+            {
+                return false; // Hucrelerin sinirlarin disina cikmasini engeller
             }
 
-            // A tile already occupies the position, thus invalid
-            if (tilemap.HasTile(tilePosition)) {
+            if (tilemap.HasTile(tilePosition)) // Bir hucre zaten bu konumu isgal ediyor, bu nedenle gecersiz
+            {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -100,59 +116,68 @@ public class Board : MonoBehaviour
         RectInt bounds = Bounds;
         int row = bounds.yMin;
 
-        // Clear from bottom to top
+        // Asagidan yukariya dogru temizle
         while (row < bounds.yMax)
         {
-            // Only advance to the next row if the current is not cleared
-            // because the tiles above will fall down when a row is cleared
-            if (IsLineFull(row)) {
-                LineClear(row);
-            } else {
+            // Yalnizca akım temizlenmezse bir sonraki satıra ilerleyin
+            // cunku bir sira temizlendiginde yukaridaki dosemeler dusecek
+            if (IsLineFull(row)) //Satir tamamen doluysa
+            {
+                LineClear(row); //Satiri temizle
+                score += 1;
+                UpdateScoreUI();
+            }
+            else //Degilse bir ust satira gec
+            {
                 row++;
             }
         }
     }
-
-    public bool IsLineFull(int row)
+    void UpdateScoreUI()
     {
-        RectInt bounds = Bounds;
+        scoreText.text = "Score: " + score.ToString();
+    }
 
-        for (int col = bounds.xMin; col < bounds.xMax; col++)
+    public bool IsLineFull(int row) //Bir satirin komple dolu olup olmadigini kontrol etmek icin
+    {
+        RectInt bounds = Bounds; //Yeni sinirlar
+
+        for (int col = bounds.xMin; col < bounds.xMax; col++) //bir satiri bastan sona artir
         {
-            Vector3Int position = new Vector3Int(col, row, 0);
+            Vector3Int position = new Vector3Int(col, row, 0); //Satirdaki col degerine gore x pozisyonuna yerlestirir
 
-            // The line is not full if a tile is missing
-            if (!tilemap.HasTile(position)) {
+            // Bir doseme eksikse satir dolu degil
+            if (!tilemap.HasTile(position))
+            {
                 return false;
             }
         }
-
+        // Satir doluysa true dondurur
         return true;
     }
 
-    public void LineClear(int row)
+    public void LineClear(int row) //Bir satiri komple temizlemek icin
     {
         RectInt bounds = Bounds;
 
-        // Clear all tiles in the row
+        // Satirdaki tum dosemeleri temizle
         for (int col = bounds.xMin; col < bounds.xMax; col++)
         {
-            Vector3Int position = new Vector3Int(col, row, 0);
-            tilemap.SetTile(position, null);
-        }
+            Vector3Int position = new Vector3Int(col, row, 0); //Col degeri yani satirdaki hucre
+            tilemap.SetTile(position, null); //Satirdaki hucreyi bos birakir
+        } //Satiri bastan sona bos birakir yani temizler
 
-        // Shift every row above down one
+        // Her satiri bir asagi kaydir
         while (row < bounds.yMax)
         {
             for (int col = bounds.xMin; col < bounds.xMax; col++)
             {
-                Vector3Int position = new Vector3Int(col, row + 1, 0);
-                TileBase above = tilemap.GetTile(position);
+                Vector3Int position = new Vector3Int(col, row + 1, 0); //bir ustteki satirdaki col degerlerini yani hucreleri alir
+                TileBase above = tilemap.GetTile(position); //Pozisyondaki tile'i alir.
 
-                position = new Vector3Int(col, row, 0);
-                tilemap.SetTile(position, above);
-            }
-
+                position = new Vector3Int(col, row, 0); //Asil satirdaki yani alt satirda yeni pozisyon olustururlur
+                tilemap.SetTile(position, above); //Ust satirdaki parcalar onceden alinan tile'a yeni pozsiyonda yerlestirilir
+            }   //Satir bir sagi satira kaydirilmis olur
             row++;
         }
     }

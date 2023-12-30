@@ -8,9 +8,9 @@ public class Piece : MonoBehaviour
     public Vector3Int position { get; private set; }
     public int rotationIndex { get; private set; }
 
-    public float stepDelay = 1f;
-    public float moveDelay = 0.1f;
-    public float lockDelay = 0.5f;
+    public float stepDelay = 1f; //İlerleme suresi
+    public float moveDelay = 0.1f; //Hareket suresi
+    public float lockDelay = 0.5f; //Kilitlenme suresi
 
     private float stepTime;
     private float moveTime;
@@ -42,34 +42,33 @@ public class Piece : MonoBehaviour
     {
         board.Clear(this);
 
-        // We use a timer to allow the player to make adjustments to the piece
-        // before it locks in place
+        // Oyuncunun parcada ayarlamalar yapmasina izin vermek icin bir zamanlayici kullaniyoruz
+        // yerine kilitlenmeden once
         lockTime += Time.deltaTime;
 
-        // Handle rotation
+        // Parcayi saat yonunun tersinde dondurur
         if (Input.GetKeyDown(KeyCode.Q))
         {
             Rotate(-1);
         }
+        // Parcayi saat yonunde dondurur
         else if (Input.GetKeyDown(KeyCode.E))
         {
             Rotate(1);
         }
-
-        // Handle hard drop
+        // Direkt hedefe dusus yapar
         if (Input.GetKeyDown(KeyCode.Space))
         {
             HardDrop();
         }
 
-        // Allow the player to hold movement keys but only after a move delay
-        // so it does not move too fast
+        // Oyuncunun hareket tuslarini tutmasina izin verir
         if (Time.time > moveTime)
         {
             HandleMoveInputs();
         }
 
-        // Advance the piece to the next row every x seconds
+        // Parcayi her .. saniyede bir sonraki satira ilerletir
         if (Time.time > stepTime)
         {
             Step();
@@ -80,22 +79,20 @@ public class Piece : MonoBehaviour
 
     private void HandleMoveInputs()
     {
-        // Soft drop movement
+        // Yumusak dusme hareketi icin
         if (Input.GetKey(KeyCode.S))
         {
             if (Move(Vector2Int.down))
             {
-                // Update the step time to prevent double movement
+                // Cift hareketi onlemek iCin adim suresini günceller
                 stepTime = Time.time + stepDelay;
             }
         }
-
-        // Left/right movement
-        if (Input.GetKey(KeyCode.A))
+        if (Input.GetKey(KeyCode.A)) // Saga hareket eder
         {
             Move(Vector2Int.left);
         }
-        else if (Input.GetKey(KeyCode.D))
+        else if (Input.GetKey(KeyCode.D)) // Sola hareket eder
         {
             Move(Vector2Int.right);
         }
@@ -105,19 +102,19 @@ public class Piece : MonoBehaviour
     {
         stepTime = Time.time + stepDelay;
 
-        // Step down to the next row
+        // Sonraki satira gecer
         Move(Vector2Int.down);
 
-        // Once the piece has been inactive for too long it becomes locked
+        // Parca cok uzun sure hareketsiz kaldiginda kilitlenir
         if (lockTime >= lockDelay)
         {
             Lock();
         }
     }
 
-    private void HardDrop()
+    private void HardDrop() //Parcayi direkt hedefe ulastirir
     {
-        while (Move(Vector2Int.down))
+        while (Move(Vector2Int.down)) //Parca asagi hareket ediyorken devam eder
         {
             continue;
         }
@@ -128,40 +125,38 @@ public class Piece : MonoBehaviour
     private void Lock()
     {
         board.Set(this);
-        board.ClearLines();
-        board.SpawnPiece();
+        board.ClearLines(); //Satiri kontrol eder ve islemlerden sonra ust satira gecer
+        board.SpawnPiece(); //Yeni parca olusturur
     }
 
-    private bool Move(Vector2Int translation)
+    private bool Move(Vector2Int translation) //Hareket kontrolu
     {
         Vector3Int newPosition = position;
-        newPosition.x += translation.x;
-        newPosition.y += translation.y;
+        newPosition.x += translation.x; //x konumunda ilerleme
+        newPosition.y += translation.y; //y konumunda ilerleme
 
         bool valid = board.IsValidPosition(this, newPosition);
 
-        // Only save the movement if the new position is valid
+        // Hareketi yalnizca yeni konum gecerliyse kaydeder
         if (valid)
         {
-            position = newPosition;
-            moveTime = Time.time + moveDelay;
+            position = newPosition; //yeni konum
+            moveTime = Time.time + moveDelay; //hareket suresi
             lockTime = 0f; // reset
         }
-
         return valid;
     }
 
-    private void Rotate(int direction)
+    private void Rotate(int direction) //Parcayi dondurur
     {
-        // Store the current rotation in case the rotation fails
-        // and we need to revert
+        // Dondurmenin basarisiz olmasi durumunda gecerli dondurmeyi saklar
         int originalRotation = rotationIndex;
 
-        // Rotate all of the cells using a rotation matrix
+        // Bir dondurme matrisi kullanarak tum hucreleri dondurur
         rotationIndex = Wrap(rotationIndex + direction, 0, 4);
         ApplyRotationMatrix(direction);
 
-        // Revert the rotation if the wall kick tests fail
+        // Duvar vurusu testleri basarisiz olursa donusu geri al
         if (!TestWallKicks(rotationIndex, direction))
         {
             rotationIndex = originalRotation;
@@ -171,9 +166,9 @@ public class Piece : MonoBehaviour
 
     private void ApplyRotationMatrix(int direction)
     {
-        float[] matrix = Data.RotationMatrix;
+        float[] matrix = Data.RotationMatrix; //Matrisi alir
 
-        // Rotate all of the cells using the rotation matrix
+        //  Bir dondurme matrisi kullanarak tum hucreleri dondurur
         for (int i = 0; i < cells.Length; i++)
         {
             Vector3 cell = cells[i];
@@ -184,28 +179,29 @@ public class Piece : MonoBehaviour
             {
                 case Tetromino.I:
                 case Tetromino.O:
-                    // "I" and "O" are rotated from an offset center point
+                    // "I" ve "O" merkez noktasindan dondurulur
                     cell.x -= 0.5f;
                     cell.y -= 0.5f;
+                    //Mathf.CeilToInt: Ondalik sayiyi her zaman bir ust sayiya yuvarlar
                     x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
                     y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
                     break;
 
                 default:
+                    //Mathf.RoundToInt: Ondalik sayiyi 0.5'den buyukse bir ust sayiya yuvarlar
                     x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
                     y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
                     break;
             }
-
             cells[i] = new Vector3Int(x, y, 0);
         }
     }
 
-    private bool TestWallKicks(int rotationIndex, int rotationDirection)
+    private bool TestWallKicks(int rotationIndex, int rotationDirection) //Duvar testi kontrolu icin
     {
         int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
 
-        for (int i = 0; i < data.wallKicks.GetLength(1); i++)
+        for (int i = 0; i < data.wallKicks.GetLength(1); i++) //Duvar uzunlugu boyunca harekete izin ver
         {
             Vector2Int translation = data.wallKicks[wallKickIndex, i];
 
@@ -215,7 +211,7 @@ public class Piece : MonoBehaviour
             }
         }
 
-        return false;
+        return false; //Duvar uzunlugu asilirsa harekete izin verme
     }
 
     private int GetWallKickIndex(int rotationIndex, int rotationDirection)

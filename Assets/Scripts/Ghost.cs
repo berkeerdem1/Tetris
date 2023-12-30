@@ -14,7 +14,7 @@ public class Ghost : MonoBehaviour
     private void Awake()
     {
         tilemap = GetComponentInChildren<Tilemap>();
-        cells = new Vector3Int[4];
+        cells = new Vector3Int[4]; //Her zaman dort hucrelik parca olusacak
     }
 
     private void LateUpdate()
@@ -25,7 +25,7 @@ public class Ghost : MonoBehaviour
         Set();
     }
 
-    private void Clear()
+    private void Clear() //Hucreleri null yapar
     {
         for (int i = 0; i < cells.Length; i++)
         {
@@ -34,7 +34,7 @@ public class Ghost : MonoBehaviour
         }
     }
 
-    private void Copy()
+    private void Copy() //Hucreleri kopyalar
     {
         for (int i = 0; i < cells.Length; i++)
         {
@@ -42,7 +42,7 @@ public class Ghost : MonoBehaviour
         }
     }
 
-    private void Drop()
+    private void Drop() //Onizleme parcasini en asagi satirda y ekseninde sabitler
     {
         Vector3Int position = trackingPiece.position;
 
@@ -51,11 +51,11 @@ public class Ghost : MonoBehaviour
 
         mainBoard.Clear(trackingPiece);
 
-        for (int row = current; row >= bottom; row--)
+        for (int row = current; row >= bottom; row--) //Row'un pozisyonunu en asagidaki satirin pozisyonu yapar
         {
-            position.y = row;
+            position.y = row; //Row'un pozisyonunu y pozisyonu yap
 
-            if (mainBoard.IsValidPosition(trackingPiece, position))
+            if (mainBoard.IsValidPosition(trackingPiece, position)) //Eger konumda sorun yoksa pozsiyonu alir
             {
                 this.position = position;
             }
@@ -65,7 +65,7 @@ public class Ghost : MonoBehaviour
             }
         }
 
-        mainBoard.Set(trackingPiece);
+        mainBoard.Set(trackingPiece); //Piece kodundaki hareketleri izler
     }
 
     private void Set()
