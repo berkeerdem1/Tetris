@@ -57,10 +57,13 @@ public class Board : MonoBehaviour
 
     public void SpawnPiece() //Data'dan random olarak parca olusturma
     {
-        int random = Random.Range(0, tetrominoes.Length);
-        TetrominoData data = tetrominoes[random];
+        if (!gameOver)
+        {
+            int random = Random.Range(0, tetrominoes.Length);
+            TetrominoData data = tetrominoes[random];
 
-        activePiece.Initialize(this, spawnPosition, data);
+            activePiece.Initialize(this, spawnPosition, data);
+        }
 
         //spawn noktasindan parca olusturabiliyorsa piece kodunu calistir yani hucre spawnla
         if (IsValidPosition(activePiece, spawnPosition))

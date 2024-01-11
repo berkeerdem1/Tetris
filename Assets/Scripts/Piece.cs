@@ -82,7 +82,7 @@ public class Piece : MonoBehaviour
     private void HandleMoveInputs()
     {
         // Yumusak dusme hareketi icin
-        if (Input.GetKey(KeyCode.S))
+        if (Input.GetKey(KeyCode.S) && !Board.gameOver)
         {
             if (Move(Vector2Int.down))
             {
@@ -90,11 +90,11 @@ public class Piece : MonoBehaviour
                 stepTime = Time.time + stepDelay;
             }
         }
-        if (Input.GetKey(KeyCode.A)) // Saga hareket eder
+        if (Input.GetKey(KeyCode.A) && !Board.gameOver) // Saga hareket eder
         {
             Move(Vector2Int.left);
         }
-        else if (Input.GetKey(KeyCode.D)) // Sola hareket eder
+        else if (Input.GetKey(KeyCode.D) && !Board.gameOver) // Sola hareket eder
         {
             Move(Vector2Int.right);
         }
