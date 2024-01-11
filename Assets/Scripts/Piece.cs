@@ -47,17 +47,17 @@ public class Piece : MonoBehaviour
         lockTime += Time.deltaTime;
 
         // Parcayi saat yonunun tersinde dondurur
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Q) && !Board.gameOver)
         {
             Rotate(-1);
         }
         // Parcayi saat yonunde dondurur
-        else if (Input.GetKeyDown(KeyCode.E))
+        else if (Input.GetKeyDown(KeyCode.E) && !Board.gameOver)
         {
             Rotate(1);
         }
         // Direkt hedefe dusus yapar
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && !Board.gameOver)
         {
             HardDrop();
         }
@@ -75,6 +75,8 @@ public class Piece : MonoBehaviour
         }
 
         board.Set(this);
+
+
     }
 
     private void HandleMoveInputs()

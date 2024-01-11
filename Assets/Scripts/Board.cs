@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Tilemaps;
+using System.Collections;
+using Unity.Burst.Intrinsics;
 
 public class Board : MonoBehaviour
 {
@@ -14,6 +16,10 @@ public class Board : MonoBehaviour
     private float time = 0;
     public Text scoreText;
     public Text timeText;
+
+    [Header("game over")]
+    public GameObject panel, retryButton;
+    public static bool gameOver = false;
     public RectInt Bounds //RectInt: Dikdortgenlerde sinir belirtmede kullanilir.
     {
         get
@@ -36,13 +42,17 @@ public class Board : MonoBehaviour
 
     private void Start()
     {
+        panel.SetActive(false);
         SpawnPiece();
     }
     private void FixedUpdate()
     {
-        time += Time.deltaTime;
-        string formattedTimer = time.ToString("Time:0.0");
-        timeText.text = formattedTimer;
+        if (!gameOver)
+        {
+            time += Time.deltaTime;
+            string formattedTimer = time.ToString("Time:0.0");
+            timeText.text = formattedTimer;
+        }
     }
 
     public void SpawnPiece() //Data'dan random olarak parca olusturma
@@ -59,16 +69,35 @@ public class Board : MonoBehaviour
         }
         else //degilse oyun bitsin
         {
+            gameOver = true;
+            panel.SetActive(true);
+            retryButton.SetActive(true);
             GameOver();
+
+        }
+    }
+    public void GameOver() //bittiginde sahnedeki bloklarin yok olmasi icin
+    {
+        if (Game_Over.Instance.isClickedRetryButton)
+        {
+            Game_Over.Instance.ResetPos(scoreText, timeText);
+
+            retryButton.SetActive(false);
+            panel.SetActive(false);
+            gameOver = false;
+
+            tilemap.ClearAllTiles();
+
             score = 0;
             time = 0;
             UpdateScoreUI();
+            Game_Over.Instance.isClickedRetryButton = false;
         }
-    }
+        else
+        {
+            Game_Over.Instance.ChangePos(scoreText, timeText);
+        }
 
-    public void GameOver() //bittiginde sahnedeki bloklarin yok olmasi icin
-    {
-        tilemap.ClearAllTiles();
     }
 
     public void Set(Piece piece) //Piece kodundaki hucrelerin olusturulmasini saglar.
