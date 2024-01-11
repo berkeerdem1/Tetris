@@ -94,7 +94,7 @@ public class Piece : MonoBehaviour
         {
             Move(Vector2Int.left);
         }
-        else if (Input.GetKey(KeyCode.D) && !Board.gameOver) // Sola hareket eder
+        else if (Input.GetKey(KeyCode.D)) // Sola hareket eder
         {
             Move(Vector2Int.right);
         }

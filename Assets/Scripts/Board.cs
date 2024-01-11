@@ -12,6 +12,8 @@ public class Board : MonoBehaviour
     public TetrominoData[] tetrominoes;
     public Vector2Int boardSize = new Vector2Int(10, 20);
     public Vector3Int spawnPosition = new Vector3Int(-1, 8, 0);
+
+    [Header("Score")]
     private int score = 0;
     private float time = 0;
     public Text scoreText;
@@ -20,6 +22,8 @@ public class Board : MonoBehaviour
     [Header("game over")]
     public GameObject panel, retryButton;
     public static bool gameOver = false;
+    public Animator camAnim;
+    public GameObject[] firlatilanObjPrefabs;
     public RectInt Bounds //RectInt: Dikdortgenlerde sinir belirtmede kullanilir.
     {
         get
@@ -42,6 +46,7 @@ public class Board : MonoBehaviour
 
     private void Start()
     {
+        camAnim = Camera.main.GetComponent<Animator>();
         panel.SetActive(false);
         SpawnPiece();
     }
@@ -50,7 +55,7 @@ public class Board : MonoBehaviour
         if (!gameOver)
         {
             time += Time.deltaTime;
-            string formattedTimer = time.ToString("Time:0.0");
+            string formattedTimer = time.ToString("Time : 0.0");
             timeText.text = formattedTimer;
         }
     }
@@ -75,11 +80,11 @@ public class Board : MonoBehaviour
             gameOver = true;
             panel.SetActive(true);
             retryButton.SetActive(true);
-            GameOver();
 
+            GameOver();
         }
     }
-    public void GameOver() //bittiginde sahnedeki bloklarin yok olmasi icin
+    public void GameOver()
     {
         if (Game_Over.Instance.isClickedRetryButton)
         {
@@ -89,16 +94,18 @@ public class Board : MonoBehaviour
             panel.SetActive(false);
             gameOver = false;
 
-            tilemap.ClearAllTiles();
+            tilemap.ClearAllTiles(); //bittiginde sahnedeki bloklarin yok olmasi icin
 
             score = 0;
             time = 0;
+
             UpdateScoreUI();
+
             Game_Over.Instance.isClickedRetryButton = false;
         }
         else
         {
-            Game_Over.Instance.ChangePos(scoreText, timeText);
+            Game_Over.Instance.ChangePos(scoreText, timeText); ;
         }
 
     }
@@ -167,7 +174,7 @@ public class Board : MonoBehaviour
     }
     void UpdateScoreUI()
     {
-        scoreText.text = "Score: " + score.ToString();
+        scoreText.text = "Score : " + score.ToString();
     }
 
     public bool IsLineFull(int row) //Bir satirin komple dolu olup olmadigini kontrol etmek icin
@@ -190,13 +197,23 @@ public class Board : MonoBehaviour
 
     public void LineClear(int row) //Bir satiri komple temizlemek icin
     {
+        camAnim.SetTrigger("shake");
         RectInt bounds = Bounds;
 
         // Satirdaki tum dosemeleri temizle
         for (int col = bounds.xMin; col < bounds.xMax; col++)
         {
             Vector3Int position = new Vector3Int(col, row, 0); //Col degeri yani satirdaki hucre
-            tilemap.SetTile(position, null); //Satirdaki hucreyi bos birakir
+            //tilemap.SetTile(position, null); //Satirdaki hucreyi bos birakir
+
+            TileBase tile = tilemap.GetTile(position);
+
+            // Eğer tile doluysa, fırlatma işlemini gerçekleştir
+            if (tile != null)
+            {
+                JumpObject(tile, position);
+            }
+            tilemap.SetTile(position, null);
         } //Satiri bastan sona bos birakir yani temizler
 
         // Her satiri bir asagi kaydir
@@ -211,6 +228,20 @@ public class Board : MonoBehaviour
                 tilemap.SetTile(position, above); //Ust satirdaki parcalar onceden alinan tile'a yeni pozsiyonda yerlestirilir
             }   //Satir bir sagi satira kaydirilmis olur
             row++;
+        }
+    }
+    void JumpObject(TileBase tile, Vector3Int position)
+    {
+        // Rastgele bir prefab seç
+        GameObject selectedPrefab = firlatilanObjPrefabs[Random.Range(0, firlatilanObjPrefabs.Length)];
+
+        GameObject firlatilanObj = Instantiate(selectedPrefab, tilemap.GetCellCenterWorld(position), Quaternion.identity);
+
+        // Firlatir
+        Rigidbody2D rb = firlatilanObj.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.AddForce(new Vector2(Random.Range(-15f, 5f), Random.Range(5f, 19f)), ForceMode2D.Impulse);
         }
     }
 
